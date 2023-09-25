@@ -1,0 +1,62 @@
+ if (ReadProcessMemory(process, (LPCVOID)userAddress, &buffer, sizeof(buffer), &bytesRead)) {
+        std::cout << "Read " << bytesRead << " bytes: " << buffer << std::endl;
+    }
+    else {
+        std::cerr << "Failed to read memory!" << std::endl;
+    }
+
+    if (!VirtualProtectEx(process, (LPVOID)userAddress, sizeof(user), PAGE_READWRITE, &oldProtect)) {
+        std::cerr << "Failed to change memory protection!" << std::endl;
+        return 1;
+    }
+
+ 
+    if (WriteProcessMemory(process, (LPVOID)userAddress, &user, sizeof(user), &bytesWritten)) {
+        std::cout << "Wrote " << bytesWritten << " bytes." << std::endl;
+        std::cout << "Wrote new value: " << user << std::endl;
+    }
+    else {
+        std::cerr << "Failed to write memory!" << std::endl;
+    }
+
+    if (ReadProcessMemory(process, (LPCVOID)userAddress, &buffer, sizeof(user), &bytesRead)) {
+        std::cout << "Read new value " << bytesRead << " bytes: " << buffer << std::endl;
+    }
+    else {
+        std::cerr << "Failed to read memory!" << std::endl;
+    }
+
+    VirtualProtectEx(process, (LPVOID)userAddress, sizeof(data), oldProtect, &temp);
+
+    std::cout << "----------------------------------------------------------------------------" << std::endl;
+
+    // Password
+    if (!VirtualProtectEx(process, (LPVOID)passwordAddress, sizeof(data), PAGE_READWRITE, &oldProtect)) {
+        std::cerr << "Failed to change memory protection!" << std::endl;
+        return 1;
+    }
+
+    if (ReadProcessMemory(process, (LPCVOID)passwordAddress, &buffer, sizeof(buffer), &bytesRead)) {
+        std::cout << "Read " << bytesRead << " bytes: " << buffer << std::endl;
+    }
+    else {
+        std::cerr << "Failed to read memory!" << std::endl;
+    }
+
+  
+    if (WriteProcessMemory(process, (LPVOID)passwordAddress, &data, sizeof(data), &bytesWritten)) {
+        std::cout << "Wrote " << bytesWritten << " bytes." << std::endl;
+        std::cout << "Wrote new value: " << data << std::endl;
+    }
+    else {
+        std::cerr << "Failed to write memory!" << std::endl;
+    }
+
+    if (ReadProcessMemory(process, (LPCVOID)passwordAddress, &buffer, sizeof(buffer), &bytesRead)) {
+        std::cout << "Read new value " << bytesRead << " bytes: " << buffer << std::endl;
+    }
+    else {
+        std::cerr << "Failed to read memory!" << std::endl;
+    }
+
+    VirtualProtectEx(process, (LPVOID)passwordAddress, sizeof(data), oldProtect, &temp);

@@ -1,0 +1,14 @@
+
+auto Readmem(HANDLE proc , uintptr_t address1, char buffer[250], SIZE_T bytestoread) {
+    ReadProcessMemory(proc, (LPCVOID)address1, &buffer, sizeof(buffer), &bytestoread);
+
+    return buffer;
+
+}
+
+auto Writemem(HANDLE proc, uintptr_t address1, std::string buffer , SIZE_T bytestowrite) {
+    VirtualProtectEx(proc, (LPVOID)address1, sizeof(buffer), PAGE_READWRITE, &oldProtect);
+	WriteProcessMemory(proc, (LPVOID)address1, &buffer, sizeof(buffer), &bytestowrite);
+    VirtualProtectEx(proc, (LPVOID)address1, sizeof(buffer), oldProtect, &temp);
+	return buffer;
+}
