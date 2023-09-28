@@ -23,5 +23,8 @@
     <Text Include="root.txt">
       <Filter>Source Files</Filter>
     </Text>
+    <Text Include="root2.txt">
+      <Filter>Source Files</Filter>
+    </Text>
   </ItemGroup>
 </Project>

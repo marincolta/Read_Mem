@@ -32,46 +32,89 @@ DWORD oldProtect;
 DWORD temp;
 
 
-auto Readmem(HANDLE proc , uintptr_t address1, char buffer[250], SIZE_T bytestoread) {
-    ReadProcessMemory(proc, (LPCVOID)address1, &buffer, sizeof(buffer), &bytestoread);
 
-    return buffer;
 
+bool ReadMemory(HANDLE hProc, LPCVOID lpBaseAddress, LPVOID lpBuffer1, SIZE_T bufferssize , DWORD protection, DWORD& oldProtect, SIZE_T& bytesRead)
+{
+    if (ReadProcessMemory(hProc, lpBaseAddress, lpBuffer1, bufferssize, &bytesRead))
+    {
+        if (VirtualProtectEx(hProc, const_cast<LPVOID>(lpBaseAddress), bufferssize, protection, &oldProtect))
+        {
+			return true;
+		}
+	}
 }
 
-auto Writemem(HANDLE proc, uintptr_t address1, std::string buffer , SIZE_T bytestowrite) {
-    VirtualProtectEx(proc, (LPVOID)address1, sizeof(buffer), PAGE_READWRITE, &oldProtect);
-	WriteProcessMemory(proc, (LPVOID)address1, &buffer, sizeof(buffer), &bytestowrite);
-    VirtualProtectEx(proc, (LPVOID)address1, sizeof(buffer), oldProtect, &temp);
-	return buffer;
+bool WriteMemory(HANDLE hProc, LPCVOID lpBaseAddress, LPVOID lpBuffer, SIZE_T bufferSize, DWORD protection, DWORD& oldProtect, SIZE_T& bytesWritten) {
+    if (WriteProcessMemory(hProc, const_cast<LPVOID>(lpBaseAddress), lpBuffer, bufferSize, &bytesWritten)) {
+        if (VirtualProtectEx(hProc, const_cast<LPVOID>(lpBaseAddress), bufferSize, protection, &oldProtect)) {
+            return true; // Success
+        }
+        else {
+            std::cerr << "Failed to change memory protection!" << std::endl;
+        }
+    }
+    else {
+        std::cerr << "Failed to write memory!" << std::endl;
+    }
+
+    return false; // Failure
 }
 
-//make a function that will read the memory of the process that will get as arguments: handle proc, unitptt_t addr1, char buffer, SIZE_T bytestoread
+
 int main() {
     const char* procname = "CrackMeVentRat.exe";
     DWORD procID = 0;
 
     char data[] = "newpass";
-    
+    char buffer[10];
     char user[] = "newuser"; 
     while (!procID) {
         procID = GetProcID(procname);
         Sleep(30);
     }
-    uintptr_t userAddress = 0x00007FF7253036C8;
-    uintptr_t passwordAddress = 0x00007FF7253036E0;
+    uintptr_t userAddress = 0x00007FF6011D11BD;
+    uintptr_t passwordAddress = 0x00007FF6011D11BD;
 
     HANDLE process = OpenProcess(PROCESS_ALL_ACCESS, FALSE, procID);
     if (process == NULL) {
         std::cerr << "Failed to open process!" << std::endl;
         return 1;
     }
-
-    // User
-    char buffer[256];
    
+   LPCVOID lpBaseAddress = (LPCVOID)userAddress;
+   LPVOID lpBuffer = (LPVOID)buffer;
+   SIZE_T bufferssize = sizeof(buffer);
+   DWORD protection = PAGE_READWRITE;
+   DWORD oldProtect;
+   SIZE_T bytesRead;
+   LPVOID lpBuffer1 = (LPVOID)user;
+   SIZE_T bufferssize1 = sizeof(user);
+   ReadMemory(process, lpBaseAddress, lpBuffer, bufferssize, protection, oldProtect, bytesRead);
+   std::cout << "The address: " << std::hex << lpBaseAddress  << std::endl;
+   std::cout << "---------------------The value: " << buffer <<"---------------------"<<std::endl;
+
+   WriteMemory(process, lpBaseAddress, lpBuffer1, bufferssize1, protection, oldProtect, bytesRead);
+
+   ReadMemory(process, lpBaseAddress, lpBuffer, bufferssize, protection, oldProtect, bytesRead);
+   std::cout << "The address: " << std::hex << lpBaseAddress << std::endl;
+   std::cout << "---------------------The value: " << buffer << "---------------------" << std::endl;
   
-  
+
+   //now for the password
+    lpBaseAddress = (LPCVOID)passwordAddress;
+    lpBuffer = (LPVOID)buffer;
+    bufferssize = sizeof(buffer);
+    LPVOID lpBuffer2 = (LPVOID)data;
+    SIZE_T bufferssize2 = sizeof(data);
+    ReadMemory(process, lpBaseAddress, lpBuffer, bufferssize, protection, oldProtect, bytesRead);
+    std::cout << "The address: " << std::hex << lpBaseAddress << std::endl;
+    std::cout << "---------------------The value: " << buffer << "---------------------" << std::endl;
+    //write memory
+    WriteMemory(process, lpBaseAddress, lpBuffer2, bufferssize2, protection, oldProtect, bytesRead);
+    ReadMemory(process, lpBaseAddress, lpBuffer, bufferssize, protection, oldProtect, bytesRead);
+    std::cout << "The address: " << std::hex << lpBaseAddress << std::endl;
+    std::cout << "---------------------The value: " << buffer << "---------------------" << std::endl;
     CloseHandle(process);
 
     return 0;

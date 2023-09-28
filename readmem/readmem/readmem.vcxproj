@@ -131,6 +131,7 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="root.txt" />
+    <Text Include="root2.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
